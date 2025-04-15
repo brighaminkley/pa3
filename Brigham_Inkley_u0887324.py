@@ -13,6 +13,14 @@ def run(command):
         sys.exit(1)
     return result.stdout.strip()
 
+def check_docker():
+    try:
+        subprocess.run(['docker', '--version'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print("[+] Docker is already installed.")
+    except subprocess.CalledProcessError:
+        print("[-] Docker not found. Installing Docker...")
+        install_docker()
+        
 def install_docker():
     """Install Docker and setup the environment."""
     print("[+] Installing Docker...")
