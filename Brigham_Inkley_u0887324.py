@@ -20,7 +20,7 @@ def check_docker():
     except subprocess.CalledProcessError:
         print("[-] Docker not found. Installing Docker...")
         install_docker()
-        
+
 def install_docker():
     """Install Docker and setup the environment."""
     print("[+] Installing Docker...")
@@ -57,8 +57,8 @@ def build_topology():
     for left, right, veth1, veth2, ip1, ip2 in link_pairs:
         run(f"ip link add {veth1} type veth peer name {veth2}")
 
-        left_pid = run(f"docker inspect -f '{{{{.State.Pid}}}}' {left}", capture_output=True).strip()
-        right_pid = run(f"docker inspect -f '{{{{.State.Pid}}}}' {right}", capture_output=True).strip()
+        left_pid = run(f"docker inspect -f '{{{{.State.Pid}}}}' {left}")
+        right_pid = run(f"docker inspect -f '{{{{.State.Pid}}}}' {right}")
 
         run(f"ip link set {veth1} netns {left_pid}")
         run(f"ip link set {veth2} netns {right_pid}")
