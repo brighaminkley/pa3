@@ -115,8 +115,10 @@ def install_routes():
     """Install routes on hosts."""
     print("[+] Installing routes on hosts...")
     try:
-        run("docker exec hostA ip route add 10.0.43.0/24 via 10.0.15.2")
-        run("docker exec hostB ip route add 10.0.15.0/24 via 10.0.43.1")
+        output = run("docker exec hostA ip route add 10.0.43.0/24 via 10.0.15.2")
+        print(f"Output: {output}")
+        output = run("docker exec hostB ip route add 10.0.15.0/24 via 10.0.43.1")
+        print(f"Output: {output}")
         print("[+] Routes installed.")
     except Exception as e:
         print(f"Error installing routes: {e}")
