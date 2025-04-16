@@ -111,9 +111,13 @@ def start_ospf():
 def install_routes():
     """Install routes on hosts."""
     print("[+] Installing routes on hosts...")
-    run("docker exec hostA ip route add 10.0.43.0/24 via 10.0.15.2")
-    run("docker exec hostB ip route add 10.0.15.0/24 via 10.0.43.1")
-    print("[+] Routes installed.")
+    try:
+        run("docker exec hostA ip route add 10.0.43.0/24 via 10.0.15.2")
+        run("docker exec hostB ip route add 10.0.15.0/24 via 10.0.43.1")
+        print("[+] Routes installed.")
+    except Exception as e:
+        print(f"Error installing routes: {e}")
+
 
 def move_traffic(path='north'):
     """Move traffic between north and south path."""
