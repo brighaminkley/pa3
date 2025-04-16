@@ -1,9 +1,26 @@
 #!/usr/bin/env python3
 
+DAEMONS_CONFIG = """zebra=yes
+bgpd=no
+ospfd=yes
+"""
+
+FRR_CONF = """!
+hostname frr
+password zebra
+log stdout
+!
+router ospf
+ network 10.0.0.0/8 area 0
+!
+"""
+
 import os
 import sys
 import subprocess
 import argparse
+import docker
+
 
 def run(command):
     """Helper function to run shell commands."""
@@ -70,10 +87,25 @@ def build_topology():
     print("[+] Topology built successfully.")
 
 def start_ospf():
-    """Start OSPF daemons on the routers."""
     print("[+] Starting OSPF daemons on routers...")
-    for r in ['r1', 'r2', 'r3', 'r4']:
-        run(f"docker exec {r} vtysh -c 'conf t' -c 'router ospf' -c 'network 0.0.0.0/0 area 0'")
+    client = docker.from_env()
+    routers = ["r1", "r2", "r3", "r4"]
+
+    for router in routers:
+        container = client.containers.get(router)
+
+        # Write daemons config to container
+        container.exec_run("bash -c 'echo \"{}\" > /etc/frr/daemons'".format(DAEMONS_CONFIG.strip()), privileged=True)
+
+        # Write frr.conf to container
+        container.exec_run("bash -c 'echo \"{}\" > /etc/frr/frr.conf'".format(FRR_CONF.strip()), privileged=True)
+
+        # Set ownership to frr user/group
+        container.exec_run("chown frr:frr /etc/frr/daemons /etc/frr/frr.conf", privileged=True)
+
+        # Start FRR daemons
+        container.exec_run("/usr/lib/frr/frrinit.sh start", privileged=True)
+
     print("[+] OSPF daemons started.")
 
 def install_routes():
