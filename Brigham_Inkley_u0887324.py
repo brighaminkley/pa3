@@ -84,6 +84,9 @@ def build_topology():
             run(f"nsenter -t {pid} -n ip link set {veth} up")
             run(f"nsenter -t {pid} -n ip addr add {ip} dev {veth}")
 
+    run("docker exec hostA apt-get update -y && apt-get install iproute2 -y")
+    run("docker exec hostB apt-get update -y && apt-get install iproute2 -y")
+
     print("[+] Topology built successfully.")
 
 def start_ospf():
