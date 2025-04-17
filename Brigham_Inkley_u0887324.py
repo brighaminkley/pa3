@@ -140,7 +140,7 @@ def install_ip_tools(container_name):
     client = docker.from_env()
     print(f"[*] Installing tools on {container_name}...")
     result = client.containers.get(container_name).exec_run(
-        'bash -c "apt-get update && apt-get install -y iproute2 iputils-ping"',
+        'bash -c "apt-get update && apt-get install -y iproute2 iputils-ping tcpdump"',
         privileged=True
     )
     print(result.output.decode())
@@ -153,14 +153,13 @@ def add_route_to_container(container, dest, gw):
     print(result.output.decode())
 
 def install_routes():
-    """Set up static routes on host containers."""
-    install_ip_tools("hostA")
-    install_ip_tools("hostB")
+    """Set up static routes and install tools on hosts and routers."""
+    for c in ["hostA", "hostB", "r1", "r4"]:
+        install_ip_tools(c)
 
     add_route_to_container("hostA", "10.0.43.0/24", "10.0.15.2")
     add_route_to_container("hostB", "10.0.15.0/24", "10.0.43.1")
-
-    print("[✓] Routes installed.")
+    print("[✓] Routes and tools installed.")
 
 def set_ospf_cost(router, interface, cost):
     """Set the OSPF cost on a router interface."""
