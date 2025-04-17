@@ -168,7 +168,13 @@ def install_routes():
 def move_traffic(path='north'):
     print(f"[+] Moving traffic on {path} path...")
     if path == 'north':
-        run("docker exec r1 ip route add 10.0.14.0/24 via 10.0.12.2")
+        # Check if the route exists before adding it
+        result = run("docker exec r1 ip route show 10.0.14.0/24")
+        if "10.0.14.0/24" not in result:
+            run("docker exec r1 ip route add 10.0.14.0/24 via 10.0.12.2")
+        else:
+            print("[!] Route 10.0.14.0/24 already exists on r1.")
+        
         run("docker exec r4 ip route del 10.0.43.0/24 || true")
     elif path == 'south':
         run("docker exec r1 ip route add 10.0.12.0/24 via 10.0.14.2")
@@ -176,6 +182,7 @@ def move_traffic(path='north'):
     else:
         print("[!] Invalid path specified.")
     print(f"[+] Traffic moved on {path} path.")
+
 
 def main():
     if os.geteuid() != 0:
