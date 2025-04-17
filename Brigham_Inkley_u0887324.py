@@ -4,6 +4,10 @@ import os
 import sys
 import subprocess
 import argparse
+try:
+    import docker
+except ImportError:
+    docker = None
 
 def check_docker_installed():
     try:
@@ -181,7 +185,9 @@ def main():
     install_pip()
     install_docker_module()
     check_docker_installed()
-    import docker
+    global docker
+    if docker is None:
+        import docker
 
     parser = argparse.ArgumentParser(description="Network Topology Orchestrator")
     parser.add_argument("--install-docker", action="store_true", help="Install Docker and setup environment")
