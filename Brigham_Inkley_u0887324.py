@@ -125,43 +125,47 @@ def start_ospf():
         container.exec_run("/usr/lib/frr/frrinit.sh start", privileged=True)
     print("[+] OSPF daemons started.")
 
-def install_routes():
-    print("[+] Installing routes on hosts...")
+def install_ip_tools(container_name):
+    client = docker.from_env()
+
     try:
-        # Install iproute2 and iputils-ping in both hosts
-        print("[*] Installing iproute2 and iputils-ping on hostA...")
-        hostA_install_result = run("docker exec hostA apt-get update -y && apt-get install -y iproute2 iputils-ping")
-        print(f"hostA install result: {hostA_install_result}")
-
-        # Check if 'ip' command is available using bash -c
-        print("[*] Checking ip command availability on hostA...")
-        ip_check_hostA = run("docker exec hostA bash -c 'if command -v ip > /dev/null 2>&1; then echo ip found; else echo ip not found; fi'")
-        print(f"hostA ip command check: {ip_check_hostA}")
-
-        print("[*] Installing iproute2 and iputils-ping on hostB...")
-        hostB_install_result = run("docker exec hostB apt-get update -y && apt-get install -y iproute2 iputils-ping")
-        print(f"hostB install result: {hostB_install_result}")
-
-        # Check if 'ip' command is available using bash -c
-        print("[*] Checking ip command availability on hostB...")
-        ip_check_hostB = run("docker exec hostB bash -c 'if command -v ip > /dev/null 2>&1; then echo ip found; else echo ip not found; fi'")
-        print(f"hostB ip command check: {ip_check_hostB}")
-
-        # Add routes after installing packages
-        print("[*] Adding route on hostA...")
-        run("docker exec hostA ip route add 10.0.43.0/24 via 10.0.15.2")
-
-        print("[*] Adding route on hostB...")
-        run("docker exec hostB ip route add 10.0.15.0/24 via 10.0.43.1")
-
-        print("[+] Routes installed.")
+        print(f"[*] Installing iproute2 and iputils-ping on {container_name}...")
+        # Run apt-get update and install iproute2 and iputils-ping inside the container
+        result = client.containers.get(container_name).exec_run("apt-get update && apt-get install -y iproute2 iputils-ping")
+        print(f"{container_name} install result: {result.output.decode('utf-8')}")
     except Exception as e:
-        print(f"Error installing routes: {e}")
+        print(f"[!] Error installing packages on {container_name}: {e}")
 
 
+def add_route_to_container(container_name, destination, gateway):
+    client = docker.from_env()
+
+    try:
+        print(f"[*] Adding route on {container_name}...")
+        # Add the route inside the container
+        route_command = f"ip route add {destination} via {gateway}"
+        result = client.containers.get(container_name).exec_run(route_command)
+        print(f"{container_name} route add result: {result.output.decode('utf-8')}")
+    except Exception as e:
+        print(f"[!] Error adding route on {container_name}: {e}")
 
 
+def install_routes():
+    containers = ['hostA', 'hostB']  # List of containers to install tools in
+    routes = [
+        {'container': 'hostA', 'destination': '10.0.43.0/24', 'gateway': '10.0.15.2'},
+        {'container': 'hostB', 'destination': '10.0.43.0/24', 'gateway': '10.0.15.1'}
+    ]  # Example routes to be added to each container
 
+    # Install iproute2 and iputils-ping on each container
+    for container in containers:
+        install_ip_tools(container)
+
+    # After installing, add routes
+    for route in routes:
+        add_route_to_container(route['container'], route['destination'], route['gateway'])
+
+    print("[+] Routes installation completed.")
 
 def move_traffic(path='north'):
     print(f"[+] Moving traffic on {path} path...")
