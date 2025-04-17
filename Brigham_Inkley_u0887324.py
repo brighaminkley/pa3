@@ -123,6 +123,27 @@ def build_topology():
 
     print("[✓] Topology built successfully.")
 
+def install_tools_on_router(node):
+    print(f"[*] Setting up tools on {node}...")
+
+    check_tcpdump = f"docker exec {node} which tcpdump > /dev/null 2>&1"
+    if os.system(check_tcpdump) == 0:
+        print(f"    [✓] tcpdump already installed on {node}")
+        return
+
+    setup_commands = [
+        "apt -y update",
+        "apt -y install curl gnupg lsb-release",
+        "curl -s https://deb.frrouting.org/frr/keys.gpg | tee /usr/share/keyrings/frrouting.gpg > /dev/null",
+        "echo deb '[signed-by=/usr/share/keyrings/frrouting.gpg]' https://deb.frrouting.org/frr $(lsb_release -s -c) frr-stable | tee -a /etc/apt/sources.list.d/frr.list",
+        "apt update",
+        "apt -y install tcpdump",
+    ]
+
+    for cmd in setup_commands:
+        print(f"    [>] {cmd}")
+        os.system(f"docker exec {node} bash -c \"{cmd}\"")
+
 def start_ospf():
     """Configure and start OSPF daemons on routers."""
     print("[+] Starting OSPF daemons...")
@@ -154,8 +175,8 @@ def add_route_to_container(container, dest, gw):
 
 def install_routes():
     """Set up static routes and install tools on hosts and routers."""
-    for c in ["hostA", "hostB", "r1", "r4"]:
-        install_ip_tools(c)
+    for node in ["hostA", "hostB", "r1", "r4"]:
+        install_ip_tools(node)
 
     add_route_to_container("hostA", "10.0.43.0/24", "10.0.15.2")
     add_route_to_container("hostB", "10.0.15.0/24", "10.0.43.1")
