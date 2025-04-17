@@ -122,11 +122,18 @@ def start_ospf():
 def install_routes():
     print("[+] Installing routes on hosts...")
     try:
+        # Install necessary tools on the hosts
+        run("docker exec hostA apt-get update -y && apt-get install -y iproute2 iputils-ping")
+        run("docker exec hostB apt-get update -y && apt-get install -y iproute2 iputils-ping")
+        
+        # Now add the routes
         run("docker exec hostA ip route add 10.0.43.0/24 via 10.0.15.2")
         run("docker exec hostB ip route add 10.0.15.0/24 via 10.0.43.1")
+        
         print("[+] Routes installed.")
     except Exception as e:
         print(f"Error installing routes: {e}")
+
 
 def move_traffic(path='north'):
     print(f"[+] Moving traffic on {path} path...")
