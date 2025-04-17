@@ -65,11 +65,17 @@ router ospf
 """
 
 def run(command):
-    result = subprocess.run(command, shell=True, text=True, capture_output=True)
-    if result.returncode != 0:
-        print(f"Error: {result.stderr}")
+    try:
+        result = subprocess.run(command, shell=True, text=True, capture_output=True)
+        if result.returncode != 0:
+            print(f"[!] Error executing command: {command}")
+            print(f"stderr: {result.stderr}")
+            print(f"stdout: {result.stdout}")
+            sys.exit(1)
+        return result.stdout.strip()
+    except Exception as e:
+        print(f"[!] Exception during command execution: {e}")
         sys.exit(1)
-    return result.stdout.strip()
 
 def build_topology():
     print("[+] Building network topology...")
