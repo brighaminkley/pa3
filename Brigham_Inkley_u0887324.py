@@ -127,14 +127,22 @@ def install_routes():
 def move_traffic(path='north'):
     """Move traffic between north and south path."""
     print(f"[+] Moving traffic on {path} path...")
+    
+    # Add routes for North path
     if path == 'north':
-        run("docker exec r1 ip route add 10.0.43.0/24 via 10.0.12.2")
-        run("docker exec r4 ip route add 10.0.15.0/24 via 10.0.24.2")
+        run("docker exec r1 ip route add 10.0.23.0/24 via 10.0.12.2")  # R1 to R2 (Network 12)
+        run("docker exec r2 ip route add 10.0.15.0/24 via 10.0.23.2")  # R2 to R3 (Network 23)
+        run("docker exec r3 ip route add 10.0.15.0/24 via 10.0.15.2")  # R3 to HostB (Network 15)
+        
+    # Add routes for South path
     elif path == 'south':
-        run("docker exec r1 ip route add 10.0.43.0/24 via 10.0.14.2")
-        run("docker exec r4 ip route add 10.0.15.0/24 via 10.0.24.1")
+        run("docker exec r1 ip route add 10.0.43.0/24 via 10.0.24.2")  # R1 to R4 (Network 24)
+        run("docker exec r4 ip route add 10.0.15.0/24 via 10.0.43.2")  # R4 to R3 (Network 43)
+        run("docker exec r3 ip route add 10.0.15.0/24 via 10.0.43.1")  # R3 to HostB (Network 43)
+        
     else:
         print("[!] Invalid path specified.")
+    
     print(f"[+] Traffic moved on {path} path.")
 
 def main():
