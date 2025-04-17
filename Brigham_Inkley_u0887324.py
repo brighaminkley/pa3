@@ -128,17 +128,23 @@ def move_traffic(path='north'):
     """Move traffic between north and south path."""
     print(f"[+] Moving traffic on {path} path...")
     
-    # Add routes for North path
+    # Add routes for North path (using the correct network names for each segment)
     if path == 'north':
-        run("docker exec r1 ip route add 10.0.23.0/24 via 10.0.12.2")  # R1 to R2 (Network 12)
-        run("docker exec r2 ip route add 10.0.15.0/24 via 10.0.23.2")  # R2 to R3 (Network 23)
-        run("docker exec r3 ip route add 10.0.15.0/24 via 10.0.15.2")  # R3 to HostB (Network 15)
+        # R1 to R2 (Net12)
+        run("docker exec r1 ip route add 10.0.12.0/24 via 10.0.14.2")
+        # R2 to R3 (Net23)
+        run("docker exec r2 ip route add 10.0.23.0/24 via 10.0.12.2")
+        # R3 to HostB (Net15)
+        run("docker exec r3 ip route add 10.0.15.0/24 via 10.0.23.2")
         
-    # Add routes for South path
+    # Add routes for South path (using the correct network names for each segment)
     elif path == 'south':
-        run("docker exec r1 ip route add 10.0.43.0/24 via 10.0.24.2")  # R1 to R4 (Network 24)
-        run("docker exec r4 ip route add 10.0.15.0/24 via 10.0.43.2")  # R4 to R3 (Network 43)
-        run("docker exec r3 ip route add 10.0.15.0/24 via 10.0.43.1")  # R3 to HostB (Network 43)
+        # R1 to R4 (Net24)
+        run("docker exec r1 ip route add 10.0.24.0/24 via 10.0.14.2")
+        # R4 to R3 (Net43)
+        run("docker exec r4 ip route add 10.0.43.0/24 via 10.0.24.2")
+        # R3 to HostB (Net15)
+        run("docker exec r3 ip route add 10.0.15.0/24 via 10.0.43.2")
         
     else:
         print("[!] Invalid path specified.")
