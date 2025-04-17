@@ -18,8 +18,19 @@ def install_pip():
         subprocess.check_call([sys.executable, "-m", "pip", "--version"])
         print("pip is already installed.")
     except subprocess.CalledProcessError:
-        print("pip not found, installing pip...")
-        subprocess.check_call([sys.executable, "-m", "ensurepip", "--upgrade"])
+        print("pip not found, attempting to install pip via ensurepip...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "ensurepip", "--upgrade"])
+            print("pip installed using ensurepip.")
+        except subprocess.CalledProcessError:
+            print("ensurepip failed, trying apt-get install python3-pip...")
+            try:
+                subprocess.check_call(["apt-get", "update"])
+                subprocess.check_call(["apt-get", "install", "-y", "python3-pip"])
+                print("pip installed using apt.")
+            except subprocess.CalledProcessError as e:
+                print(f"[!] Failed to install pip via apt: {e}")
+                sys.exit(1)
 
 def install_docker():
     try:
