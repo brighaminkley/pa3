@@ -117,6 +117,21 @@ def build_topology():
 
     print("[+] Topology built successfully.")
 
+def set_ospf_cost(router, interface, cost):
+    client = docker.from_env()
+    try:
+        cmd = (
+            f'vtysh -c "configure terminal" '
+            f'-c "interface {interface}" '
+            f'-c "ip ospf cost {cost}"'
+        )
+        print(f"[+] Setting OSPF cost on {router}:{interface} to {cost}")
+        result = client.containers.get(router).exec_run(cmd, privileged=True)
+        output = result.output.decode('utf-8')
+        print(f"{router} output: {output}")
+    except Exception as e:
+        print(f"[!] Failed to set OSPF cost on {router}: {e}")
+
 def start_ospf():
     print("[+] Starting OSPF daemons on routers...")
     client = docker.from_env()
@@ -134,7 +149,8 @@ def install_ip_tools(container_name):
     try:
         print(f"[*] Installing iproute2 and iputils-ping on {container_name}...")
         result = client.containers.get(container_name).exec_run(
-            "apt-get update && apt-get install -y iproute2 iputils-ping"
+            cmd='bash -c "apt-get update && apt-get install -y iproute2 iputils-ping"',
+            privileged=True
         )
         print(f"{container_name} install result: {result.output.decode('utf-8')}")
     except Exception as e:
@@ -166,30 +182,23 @@ def install_routes():
     print("[+] Routes installation completed.")
 
 def move_traffic(path='north'):
-    print(f"[+] Moving traffic on {path} path...")
+    print(f"[+] Moving traffic on {path} path using OSPF costs...")
     if path == 'north':
-        # Check if the route exists before adding it
-        result = run("docker exec r1 ip route show 10.0.14.0/24")
-        if "10.0.14.0/24" not in result:
-            run("docker exec r1 ip route add 10.0.14.0/24 via 10.0.12.2")
-        else:
-            print("[!] Route 10.0.14.0/24 already exists on r1.")
-        
-        run("docker exec r4 ip route del 10.0.43.0/24 || true")
+        # Prefer R1-R2-R3 path
+        set_ospf_cost("r1", "veth-r1r2", 10)
+        set_ospf_cost("r1", "veth-r1r4", 100)
+        set_ospf_cost("r3", "veth-r3r2", 10)
+        set_ospf_cost("r3", "veth-r3r4", 100)
     elif path == 'south':
-        # Check if the route exists before adding it
-        result = run("docker exec r1 ip route show 10.0.12.0/24")
-        if "10.0.12.0/24" not in result:
-            run("docker exec r1 ip route add 10.0.12.0/24 via 10.0.14.2")
-        else:
-            print("[!] Route 10.0.12.0/24 already exists on r1.")
-        
-        run("docker exec r2 ip route del 10.0.23.0/24 || true")
+        # Prefer R1-R4-R3 path
+        set_ospf_cost("r1", "veth-r1r2", 100)
+        set_ospf_cost("r1", "veth-r1r4", 10)
+        set_ospf_cost("r3", "veth-r3r2", 100)
+        set_ospf_cost("r3", "veth-r3r4", 10)
     else:
-        print("[!] Invalid path specified.")
-    print(f"[+] Traffic moved on {path} path.")
-
-
+        print("[!] Invalid path specified. Use 'north' or 'south'.")
+        return
+    print(f"[✓] OSPF cost update complete. Traffic now prefers {path} path.")
 
 def main():
     if os.geteuid() != 0:
