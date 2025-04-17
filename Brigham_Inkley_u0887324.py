@@ -4,6 +4,7 @@ import os
 import sys
 import subprocess
 import argparse
+import urllib.request
 
 def install_pip():
     """Ensure pip is installed."""
@@ -12,7 +13,13 @@ def install_pip():
         subprocess.check_call([sys.executable, "-m", "pip", "--version"])
     except subprocess.CalledProcessError:
         print("[+] Pip not found, installing...")
-        subprocess.check_call([sys.executable, "-m", "ensurepip", "--upgrade"])
+        try:
+            # Try installing pip using the get-pip.py script
+            urllib.request.urlretrieve("https://bootstrap.pypa.io/get-pip.py", "/tmp/get-pip.py")
+            subprocess.check_call([sys.executable, "/tmp/get-pip.py"])
+        except Exception as e:
+            print(f"[!] Error installing pip: {e}")
+            sys.exit(1)
 
 def install_docker_module():
     """Ensure the Docker Python module is installed."""
