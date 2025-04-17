@@ -4,6 +4,16 @@ import os
 import sys
 import subprocess
 import argparse
+
+def install_pip():
+    """Ensure pip is installed."""
+    try:
+        # Check if pip is installed
+        subprocess.check_call([sys.executable, "-m", "pip", "--version"])
+    except subprocess.CalledProcessError:
+        print("[+] Pip not found, installing...")
+        subprocess.check_call([sys.executable, "-m", "ensurepip", "--upgrade"])
+
 def install_docker_module():
     """Ensure the Docker Python module is installed."""
     try:
@@ -12,7 +22,7 @@ def install_docker_module():
         print("[+] Docker module not found, installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "docker"])
 
-# Automatically install docker module if it's missing
+install_pip()
 install_docker_module()
 
 import docker  # Now you can safely import docker after installing it
