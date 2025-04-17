@@ -4,11 +4,9 @@ import os
 import sys
 import subprocess
 import argparse
-import urllib.request
 import docker
 
 def check_docker_installed():
-    """Check if Docker is installed, install if missing."""
     try:
         subprocess.check_call(['docker', '--version'])
         print("Docker is already installed.")
@@ -16,7 +14,7 @@ def check_docker_installed():
         print("Docker is not installed. Installing Docker...")
         install_docker()
 
-def install_pip():  # Keep just this one
+def install_pip():
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "--version"])
         print("pip is already installed.")
@@ -25,15 +23,9 @@ def install_pip():  # Keep just this one
         subprocess.check_call([sys.executable, "-m", "ensurepip", "--upgrade"])
 
 def install_docker():
-    """Install Docker if it's not found."""
     try:
-        # Update apt and install required packages
         subprocess.check_call(['apt-get', 'update'])
-
-        # Install Docker
         subprocess.check_call(['apt-get', 'install', '-y', 'docker.io'])
-
-        # Verify installation
         subprocess.check_call(['docker', '--version'])
         print("Docker installation complete.")
     except subprocess.CalledProcessError as e:
@@ -41,7 +33,6 @@ def install_docker():
         sys.exit(1)
 
 def install_docker_module():
-    """Install the Docker Python module if not found."""
     try:
         import docker
         print("Docker Python module already installed.")
@@ -65,6 +56,7 @@ router ospf
 """
 
 def run(command):
+    print(f"[run] Executing: {command}")
     try:
         result = subprocess.run(command, shell=True, text=True, capture_output=True)
         if result.returncode != 0:
@@ -109,8 +101,6 @@ def build_topology():
             run(f"nsenter -t {pid} -n ip link set {veth} up")
             run(f"nsenter -t {pid} -n ip addr add {ip} dev {veth}")
 
-    run("docker exec hostA apt-get update -y && apt-get install -y iproute2 iputils-ping")
-    run("docker exec hostB apt-get update -y && apt-get install -y iproute2 iputils-ping")
     print("[+] Topology built successfully.")
 
 def start_ospf():
@@ -127,41 +117,35 @@ def start_ospf():
 
 def install_ip_tools(container_name):
     client = docker.from_env()
-
     try:
         print(f"[*] Installing iproute2 and iputils-ping on {container_name}...")
-        # Run apt-get update and install iproute2 and iputils-ping inside the container
-        result = client.containers.get(container_name).exec_run("apt-get update && apt-get install -y iproute2 iputils-ping")
+        result = client.containers.get(container_name).exec_run(
+            "apt-get update && apt-get install -y iproute2 iputils-ping"
+        )
         print(f"{container_name} install result: {result.output.decode('utf-8')}")
     except Exception as e:
         print(f"[!] Error installing packages on {container_name}: {e}")
 
-
 def add_route_to_container(container_name, destination, gateway):
     client = docker.from_env()
-
     try:
         print(f"[*] Adding route on {container_name}...")
-        # Add the route inside the container
         route_command = f"ip route add {destination} via {gateway}"
         result = client.containers.get(container_name).exec_run(route_command)
         print(f"{container_name} route add result: {result.output.decode('utf-8')}")
     except Exception as e:
         print(f"[!] Error adding route on {container_name}: {e}")
 
-
 def install_routes():
-    containers = ['hostA', 'hostB']  # List of containers to install tools in
+    containers = ['hostA', 'hostB']
     routes = [
         {'container': 'hostA', 'destination': '10.0.43.0/24', 'gateway': '10.0.15.2'},
-        {'container': 'hostB', 'destination': '10.0.43.0/24', 'gateway': '10.0.15.1'}
-    ]  # Example routes to be added to each container
+        {'container': 'hostB', 'destination': '10.0.15.0/24', 'gateway': '10.0.43.1'}
+    ]
 
-    # Install iproute2 and iputils-ping on each container
     for container in containers:
         install_ip_tools(container)
 
-    # After installing, add routes
     for route in routes:
         add_route_to_container(route['container'], route['destination'], route['gateway'])
 
@@ -183,8 +167,9 @@ def main():
     if os.geteuid() != 0:
         print("[!] This script must be run as root.")
         sys.exit(1)
+
     install_pip()
-    install_docker_module()  
+    install_docker_module()
     check_docker_installed()
     import docker
 
@@ -194,7 +179,7 @@ def main():
     parser.add_argument("--start-ospf", action="store_true", help="Start OSPF daemons")
     parser.add_argument("--install-routes", action="store_true", help="Install routes on hosts")
     parser.add_argument("--move-traffic", choices=['north', 'south'], help="Move traffic on the specified path")
-    
+
     args = parser.parse_args()
 
     if args.install_docker:
@@ -210,6 +195,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 # #!/usr/bin/env python3
 
