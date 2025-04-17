@@ -28,6 +28,14 @@ def run(command):
         sys.exit(1)
     return result.stdout.strip()
 
+def install_docker_module():
+    """Ensure the Docker Python module is installed."""
+    try:
+        import docker
+    except ImportError:
+        print("[+] Docker module not found, installing...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "docker"])
+
 def install_docker():
     print("[+] Installing Docker...")
     run("git clone https://gitlab.flux.utah.edu/teach-studentview/cs4480-2025-s.git")
@@ -105,12 +113,16 @@ def move_traffic(path='north'):
     print(f"[+] Traffic moved on {path} path.")
 
 def main():
-    parser = argparse.ArgumentParser(description="CS4480 Network Orchestrator")
-    parser.add_argument("--install-docker", action="store_true", help="Install Docker and environment")
+    # Ensure the Docker Python module is installed
+    install_docker_module()
+
+    parser = argparse.ArgumentParser(description="Network Topology Orchestrator")
+    parser.add_argument("--install-docker", action="store_true", help="Install Docker and setup environment")
     parser.add_argument("--build-topology", action="store_true", help="Build network topology")
     parser.add_argument("--start-ospf", action="store_true", help="Start OSPF daemons")
-    parser.add_argument("--install-routes", action="store_true", help="Install host routes")
-    parser.add_argument("--move-traffic", choices=['north', 'south'], help="Move traffic via north or south path")
+    parser.add_argument("--install-routes", action="store_true", help="Install routes on hosts")
+    parser.add_argument("--move-traffic", choices=['north', 'south'], help="Move traffic on the specified path")
+    
     args = parser.parse_args()
 
     if args.install_docker:
