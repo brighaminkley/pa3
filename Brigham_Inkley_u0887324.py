@@ -5,6 +5,7 @@ import sys
 import subprocess
 import argparse
 import urllib.request
+import docker
 
 def check_docker_installed():
     """Check if Docker is installed, install if missing."""
