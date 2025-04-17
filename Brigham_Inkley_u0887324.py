@@ -22,6 +22,7 @@ def install_docker_module():
         print("[+] Docker module not found, installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "docker"])
 
+# Ensure pip and docker module are installed
 install_pip()
 install_docker_module()
 
@@ -126,7 +127,8 @@ def move_traffic(path='north'):
     print(f"[+] Traffic moved on {path} path.")
 
 def main():
-    # Ensure the Docker Python module is installed
+    # Ensure pip and Docker module are installed
+    install_pip()
     install_docker_module()
 
     parser = argparse.ArgumentParser(description="Network Topology Orchestrator")
