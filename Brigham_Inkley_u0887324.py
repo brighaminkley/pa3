@@ -133,18 +133,18 @@ def install_routes():
         hostA_install_result = run("docker exec hostA apt-get update -y && apt-get install -y iproute2 iputils-ping")
         print(f"hostA install result: {hostA_install_result}")
 
-        # Check if 'ip' command is available
+        # Check if 'ip' command is available using command -v
         print("[*] Checking ip command availability on hostA...")
-        ip_check_hostA = run("docker exec hostA which ip")
+        ip_check_hostA = run("docker exec hostA command -v ip")
         print(f"hostA ip command found at: {ip_check_hostA}")
 
         print("[*] Installing iproute2 and iputils-ping on hostB...")
         hostB_install_result = run("docker exec hostB apt-get update -y && apt-get install -y iproute2 iputils-ping")
         print(f"hostB install result: {hostB_install_result}")
 
-        # Check if 'ip' command is available
+        # Check if 'ip' command is available using command -v
         print("[*] Checking ip command availability on hostB...")
-        ip_check_hostB = run("docker exec hostB which ip")
+        ip_check_hostB = run("docker exec hostB command -v ip")
         print(f"hostB ip command found at: {ip_check_hostB}")
 
         # Add routes after installing packages
@@ -157,6 +157,7 @@ def install_routes():
         print("[+] Routes installed.")
     except Exception as e:
         print(f"Error installing routes: {e}")
+
 
 
 
