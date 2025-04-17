@@ -6,34 +6,47 @@ import subprocess
 import argparse
 import urllib.request
 
-def install_pip():
-    """Ensure pip is installed."""
+def check_docker_installed():
+    """Check if Docker is installed."""
     try:
-        # Check if pip is installed
-        subprocess.check_call([sys.executable, "-m", "pip", "--version"])
+        subprocess.check_call(['docker', '--version'])
+        print("Docker is already installed.")
     except subprocess.CalledProcessError:
-        print("[+] Pip not found, installing...")
-        try:
-            # Try installing pip using the get-pip.py script
-            urllib.request.urlretrieve("https://bootstrap.pypa.io/get-pip.py", "/tmp/get-pip.py")
-            subprocess.check_call([sys.executable, "/tmp/get-pip.py"])
-        except Exception as e:
-            print(f"[!] Error installing pip: {e}")
-            sys.exit(1)
+        print("Docker is not installed. Installing Docker...")
+        install_docker()
+
+def install_pip():  # Keep just this one
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "--version"])
+        print("pip is already installed.")
+    except subprocess.CalledProcessError:
+        print("pip not found, installing pip...")
+        subprocess.check_call([sys.executable, "-m", "ensurepip", "--upgrade"])
+
+def install_docker():
+    """Install Docker if it's not found."""
+    try:
+        # Update apt and install required packages
+        subprocess.check_call(['apt-get', 'update'])
+
+        # Install Docker
+        subprocess.check_call(['apt-get', 'install', '-y', 'docker.io'])
+
+        # Verify installation
+        subprocess.check_call(['docker', '--version'])
+        print("Docker installation complete.")
+    except subprocess.CalledProcessError as e:
+        print(f"Error installing Docker: {e}")
+        sys.exit(1)
 
 def install_docker_module():
-    """Ensure the Docker Python module is installed."""
+    """Install the Docker Python module if not found."""
     try:
         import docker
+        print("Docker Python module already installed.")
     except ImportError:
-        print("[+] Docker module not found, installing...")
+        print("Docker Python module not found, installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "docker"])
-
-# Ensure pip and docker module are installed
-install_pip()
-install_docker_module()
-
-import docker  # Now you can safely import docker after installing it
 
 DAEMONS_CONFIG = """zebra=yes
 bgpd=no
@@ -56,13 +69,6 @@ def run(command):
         print(f"Error: {result.stderr}")
         sys.exit(1)
     return result.stdout.strip()
-
-def install_docker():
-    print("[+] Installing Docker...")
-    run("git clone https://gitlab.flux.utah.edu/teach-studentview/cs4480-2025-s.git")
-    os.chdir("cs4480-2025-s/pa3/part1/")
-    run("./dockersetup")
-    print("[+] Docker installation complete.")
 
 def build_topology():
     print("[+] Building network topology...")
@@ -134,9 +140,13 @@ def move_traffic(path='north'):
     print(f"[+] Traffic moved on {path} path.")
 
 def main():
-    # Ensure pip and Docker module are installed
+    if os.geteuid() != 0:
+        print("[!] This script must be run as root.")
+        sys.exit(1)
     install_pip()
-    install_docker_module()
+    install_docker_module()  
+    check_docker_installed()
+    import docker
 
     parser = argparse.ArgumentParser(description="Network Topology Orchestrator")
     parser.add_argument("--install-docker", action="store_true", help="Install Docker and setup environment")
