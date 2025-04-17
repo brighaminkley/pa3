@@ -95,7 +95,7 @@ def build_topology():
         run(f"docker rm -f {c} || true")
 
     for r in ['r1', 'r2', 'r3', 'r4']:
-        run(f"docker run -d --privileged --name {r} frrouting/frr:ubuntu-latest sleep infinity")
+        run(f"docker run -d --privileged --name {r} frrouting/frr-custom:latest sleep infinity")
         run(f"docker exec {r} sysctl -w net.ipv4.ip_forward=1")
 
     for h in ['hostA', 'hostB']:
