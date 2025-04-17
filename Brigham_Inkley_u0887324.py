@@ -4,7 +4,18 @@ import os
 import sys
 import subprocess
 import argparse
-import docker
+def install_docker_module():
+    """Ensure the Docker Python module is installed."""
+    try:
+        import docker
+    except ImportError:
+        print("[+] Docker module not found, installing...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "docker"])
+
+# Automatically install docker module if it's missing
+install_docker_module()
+
+import docker  # Now you can safely import docker after installing it
 
 DAEMONS_CONFIG = """zebra=yes
 bgpd=no
@@ -27,14 +38,6 @@ def run(command):
         print(f"Error: {result.stderr}")
         sys.exit(1)
     return result.stdout.strip()
-
-def install_docker_module():
-    """Ensure the Docker Python module is installed."""
-    try:
-        import docker
-    except ImportError:
-        print("[+] Docker module not found, installing...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "docker"])
 
 def install_docker():
     print("[+] Installing Docker...")
