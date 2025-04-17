@@ -7,11 +7,11 @@ import argparse
 import urllib.request
 
 def check_docker_installed():
-    """Check if Docker is installed."""
+    """Check if Docker is installed, install if missing."""
     try:
         subprocess.check_call(['docker', '--version'])
         print("Docker is already installed.")
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         print("Docker is not installed. Installing Docker...")
         install_docker()
 
