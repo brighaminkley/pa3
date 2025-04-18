@@ -255,5 +255,5 @@ def main():
     if args.move_traffic:
         move_traffic(args.move_traffic)
 
-    if __name__ == "__main__":
-        main()
+if __name__ == "__main__":
+    main()
