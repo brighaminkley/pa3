@@ -227,12 +227,19 @@ def main():
     if docker is None:
         import docker
 
-    parser = argparse.ArgumentParser(description="FRR OSPF Network Topology Setup")
-    parser.add_argument("--install-docker", action="store_true")
-    parser.add_argument("--build-topology", action="store_true")
-    parser.add_argument("--start-ospf", action="store_true")
-    parser.add_argument("--install-routes", action="store_true")
-    parser.add_argument("--move-traffic", choices=["north", "south"])
+    parser = argparse.ArgumentParser(
+        description="Orchestrator for FRR OSPF Network Topology Setup and Management"
+    )
+    parser.add_argument("--install-docker", action="store_true", help="Install Docker on the system")
+    parser.add_argument("--build-topology", action="store_true", help="Build the container network topology")
+    parser.add_argument("--start-ospf", action="store_true", help="Start OSPF routing daemons")
+    parser.add_argument("--install-routes", action="store_true", help="Install IP tools and static routes")
+    parser.add_argument("--move-traffic", choices=["north", "south"], help="Shift ICMP traffic path")
+    
+    # Show help if no arguments are provided
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(0)
 
     args = parser.parse_args()
 
@@ -246,6 +253,3 @@ def main():
         install_routes()
     if args.move_traffic:
         move_traffic(args.move_traffic)
-
-if __name__ == "__main__":
-    main()
