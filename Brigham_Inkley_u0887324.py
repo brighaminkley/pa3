@@ -216,6 +216,7 @@ def move_traffic(path='north'):
     print(f"[✓] OSPF cost updated. Traffic prefers {path} path.")
 
 def main():
+    print("[DEBUG] Script started")  
     if os.geteuid() != 0:
         print("[!] Script must be run as root.")
         sys.exit(1)
